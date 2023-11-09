@@ -123,10 +123,33 @@ class HMM:
         return f[-1]
 
     def viterbi(self, observation):
-        """given an observation,
-        find and return the state sequence that generated
-        the output sequence, using the Viterbi algorithm.
-        """
+        states = list(self.transitions['init'].keys())
+        V = [{}]
+        path = {}
+
+        # Initialize base cases
+        for y in states:
+            V[0][y] = self.transitions['init'][y] * self.emissions[y][observation.outputseq[0]]
+            path[y] = [y]
+
+        # Run Viterbi for remaining observations
+        for t in range(1, len(observation.outputseq)):
+            V.append({})
+            newpath = {}
+
+            for y in states:
+                emission_prob = self.emissions[y][observation.outputseq[t]]
+                (prob, state) = max([(V[t - 1][y0] * self.transitions[y0][y] * emission_prob, y0) for y0 in states])
+                V[t][y] = prob
+                newpath[y] = path[state] + [y]
+
+            path = newpath
+
+        # Get most probable final state
+        n = len(observation.outputseq) - 1
+        (prob, state) = max([(V[n][y], y) for y in states])
+
+        return path[state]
 
 
 if __name__ == " __name__":
